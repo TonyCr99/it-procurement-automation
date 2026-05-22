@@ -53,6 +53,17 @@ ticket:
     sla_hours: 48                   # Adjust per your company policy (e.g. 24, 48, 72)
     reminder_after_hours: 24        # Send reminder if no response after this
 
+
+  statuses:
+    new: "New"
+    on_hold: "On Hold"
+    waiting_approval: "Waiting for Approval"
+    waiting_delivery: "Waiting for Delivery"
+    waiting_pickup: "Waiting for Pickup"
+    waiting_support: "Waiting for Support"
+    under_investigation: "Under Investigation"
+    closed: "Closed"
+
 # ------------------------------------------------------------
 # Integrations
 # ------------------------------------------------------------
@@ -76,12 +87,24 @@ integrations:
     user: "${ABASTEO_USER}"
     password: "${ABASTEO_PASSWORD}"
 
-  notifications:
-    email:
-      sender: "${NOTIFY_EMAIL_SENDER}"
-    slack:
-      webhook_url: "${SLACK_WEBHOOK_URL}"
-      channel: "#it-purchases"      # Default notification channel
+ # ------------------------------------------------------------
+# Notifications
+# ------------------------------------------------------------
+notifications:
+  channels:
+    email: "${NOTIFY_EMAIL}"
+    slack: "${NOTIFY_SLACK}"
+    teams: "${NOTIFY_TEAMS}"
+
+  email:
+    sender: "${NOTIFY_EMAIL_SENDER}"
+
+  slack:
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+    channel: "#it-purchases"
+
+  teams:
+    webhook_url: "${TEAMS_WEBHOOK_URL}"
 
 # ------------------------------------------------------------
 # Finance

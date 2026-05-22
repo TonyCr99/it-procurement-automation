@@ -50,6 +50,7 @@ Common pain points:
 
 - [x] Project architecture and configuration
 - [ ] Jira connector — read and update tickets
+- [ ] Interactive CLI menu
 - [ ] Quote generation module
 - [ ] Netsuite purchase order connector
 - [ ] Approval notification engine
