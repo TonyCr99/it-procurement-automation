@@ -62,6 +62,7 @@ integrations:
     url: "${JIRA_URL}"
     user: "${JIRA_USER}"
     api_token: "${JIRA_API_TOKEN}"
+    api_version: 3            # v3 recommended — v2 may cause issues
 
   netsuite:
     account_id: "${NETSUITE_ACCOUNT_ID}"
