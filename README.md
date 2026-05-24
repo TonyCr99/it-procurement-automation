@@ -49,8 +49,8 @@ Common pain points:
 ## Roadmap
 
 - [x] Project architecture and configuration
-- [ ] Jira connector — read and update tickets
-- [ ] Interactive CLI menu
+- [x] Jira connector — read and update tickets
+- [x] Interactive CLI menu
 - [ ] Quote generation module
 - [ ] Netsuite purchase order connector
 - [ ] Approval notification engine
