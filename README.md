@@ -53,14 +53,16 @@ Common pain points:
 - [x] Jira connector — read and update tickets
 - [x] Interactive CLI menu
 - [x] Quote generation module
+- [x] Approval notification engine
 - [x] Netsuite purchase order connector
 - [x] Price change validation
 - [x] Setup wizard — guided first-time configuration
+- [x] Azure AD — cost center lookup and approver validation
+- [x] Vendor scraper — autonomous product selection
 - [ ] Fix: Jira custom fields mapping in live mode
-- [ ] Fix: Loading indicator during API calls
-- [ ] Azure AD — cost center lookup by user
-- [ ] Vendor scraper — Playwright live mode
+- [ ] Vendor scraper — Playwright live mode test
 - [ ] Netsuite live mode — OAuth configuration
+- [ ] Azure AD live mode — Graph API test
 - [ ] Web dashboard
 - [ ] Multi-tenant support
 

@@ -34,3 +34,11 @@ Thumbs.db
 # ------------------------------------------------------------
 *.log
 *.tmp
+
+# ------------------------------------------------------------
+# Data files — mock versions are safe to commit
+# Real versions contain sensitive company data
+# ------------------------------------------------------------
+src/data/cost_centers.xlsx
+src/data/*.xlsx
+!src/data/cost_centers_mock.xlsx

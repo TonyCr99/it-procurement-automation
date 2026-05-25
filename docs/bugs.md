@@ -14,7 +14,8 @@
 `cost_center` and `po_reason` return `None` in live mode because they are
 custom fields in Jira with company-specific field IDs.  
 **Workaround:** Mock mode returns all fields correctly.  
-**Next step:** Identify custom field IDs in Jira and map them in the connector.
+**Next step:** Inspect custom field IDs directly in Jira and map them
+in `get_ticket()` live mode return dict.
 
 ### BUG-005 — Scripts not on PATH (Windows)
 **Status:** Open — low priority  
