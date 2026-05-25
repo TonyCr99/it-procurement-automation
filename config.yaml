@@ -1,121 +1,69 @@
-# ============================================================
-# IT Procurement Automation — Configuration File
-# ============================================================
-# Copy this file and adjust values to match your environment.
-# Sensitive credentials go in .env, never here.
-
-# ------------------------------------------------------------
-# Company
-# ------------------------------------------------------------
 company:
-  name: "Your Company Name"
-  country: "MX"
-  timezone: "America/Mexico_City"
-
-# ------------------------------------------------------------
-# Hardware catalog
-# ------------------------------------------------------------
+  name: Dunder Mifflin
+  country: US
+  timezone: America
 hardware:
   types:
-    - windows
-    - macbook
-
+  - windows
+  - macbook
   tiers:
     standard:
-      label: "Standard"
-      description: "Basic workload — office, email, productivity"
+      label: Standard
+      description: Basic workload — office, email, productivity
     standard_plus:
-      label: "Standard Plus"
-      description: "Medium workload — multiple apps, light development"
+      label: Standard Plus
+      description: Medium workload — multiple apps, light development
     power:
-      label: "Power"
-      description: "Heavy workload — development, design, data"
-      
+      label: Power
+      description: Heavy workload — development, design, data
   po_reasons:
-    new_joiner: "NEW JOINER"
-    equipment_change: "CAMBIO DE EQUIPO"
-    replacement: "REPOSICION DE EQUIPO"
-
-# ------------------------------------------------------------
-# Ticket workflow (Jira)
-# ------------------------------------------------------------
+    new_joiner: NEW JOINER
+    equipment_change: CAMBIO DE EQUIPO
+    replacement: REPOSICION DE EQUIPO
 ticket:
-  project_key: "IT-PURCHASE"        # Your Jira project key
-  
+  project_key: IT-Procurement
   statuses:
-    new: "New"
-    quoting: "Quoting"
-    pending_approval: "Pending Approval"
-    approved: "Approved"
-    rejected: "Rejected"
-    purchase_order_created: "PO Created"
-    pending_payment: "Pending Payment"
-    ordered: "Ordered"
-    delivered: "Delivered"
-    closed: "Closed"
-
+    new: New
+    on_hold: On Hold
+    waiting_approval: Waiting for Approval
+    waiting_delivery: Waiting for Delivery
+    waiting_pickup: Waiting for Pickup
+    waiting_support: Waiting for Support
+    under_investigation: Under Investigation
+    closed: Closed
   approval:
-    sla_hours: 48                   # Adjust per your company policy (e.g. 24, 48, 72)
-    reminder_after_hours: 24        # Send reminder if no response after this
-
-
-  statuses:
-    new: "New"
-    on_hold: "On Hold"
-    waiting_approval: "Waiting for Approval"
-    waiting_delivery: "Waiting for Delivery"
-    waiting_pickup: "Waiting for Pickup"
-    waiting_support: "Waiting for Support"
-    under_investigation: "Under Investigation"
-    closed: "Closed"
-
-# ------------------------------------------------------------
-# Integrations
-# ------------------------------------------------------------
+    sla_hours: 48
+    reminder_after_hours: 24
 integrations:
-
   jira:
-    url: "${JIRA_URL}"
-    user: "${JIRA_USER}"
-    api_token: "${JIRA_API_TOKEN}"
-    api_version: 3            # v3 recommended — v2 may cause issues
-
+    url: ${JIRA_URL}
+    user: ${JIRA_USER}
+    api_token: ${JIRA_API_TOKEN}
+    api_version: 3
   netsuite:
-    account_id: "${NETSUITE_ACCOUNT_ID}"
-    consumer_key: "${NETSUITE_CONSUMER_KEY}"
-    consumer_secret: "${NETSUITE_CONSUMER_SECRET}"
-    token_id: "${NETSUITE_TOKEN_ID}"
-    token_secret: "${NETSUITE_TOKEN_SECRET}"
-
+    account_id: ${NETSUITE_ACCOUNT_ID}
+    consumer_key: ${NETSUITE_CONSUMER_KEY}
+    consumer_secret: ${NETSUITE_CONSUMER_SECRET}
+    token_id: ${NETSUITE_TOKEN_ID}
+    token_secret: ${NETSUITE_TOKEN_SECRET}
   abasteo:
-    url: "${ABASTEO_URL}"
-    user: "${ABASTEO_USER}"
-    password: "${ABASTEO_PASSWORD}"
-
- # ------------------------------------------------------------
-# Notifications
-# ------------------------------------------------------------
+    url: ${ABASTEO_URL}
+    user: ${ABASTEO_USER}
+    password: ${ABASTEO_PASSWORD}
 notifications:
   channels:
-    email: "${NOTIFY_EMAIL}"
-    slack: "${NOTIFY_SLACK}"
-    teams: "${NOTIFY_TEAMS}"
-
+    email: ${NOTIFY_EMAIL}
+    slack: ${NOTIFY_SLACK}
+    teams: ${NOTIFY_TEAMS}
   email:
-    sender: "${NOTIFY_EMAIL_SENDER}"
-
+    sender: ${NOTIFY_EMAIL_SENDER}
   slack:
-    webhook_url: "${SLACK_WEBHOOK_URL}"
-    channel: "#it-purchases"
-
+    webhook_url: ${SLACK_WEBHOOK_URL}
+    channel: '#it-purchases'
   teams:
-    webhook_url: "${TEAMS_WEBHOOK_URL}"
-
-# ------------------------------------------------------------
-# Finance
-# ------------------------------------------------------------
+    webhook_url: ${TEAMS_WEBHOOK_URL}
 finance:
-  team_email: "${FINANCE_TEAM_EMAIL}"
-  payment_lead_time_hours: 24       # Min hours to create order before payment date
-  price_change_tolerance_pct: 0     # Alert if price changes by more than this %
-  tax_rate: 0.16                  # IVA 16% — adjust per country/region
+  team_email: ${FINANCE_TEAM_EMAIL}
+  payment_lead_time_hours: 24
+  price_change_tolerance_pct: 0
+  tax_rate: 0.16
