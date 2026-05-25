@@ -70,11 +70,13 @@ class VendorConnector:
         raise NotImplementedError("Live vendor scraping not yet implemented.")
 
     def get_warranty_options(self) -> dict:
-        """Returns available warranty options."""
+        """
+        Returns available warranty options.
+        Reserved for future use — warranty is currently
+        selected automatically by the vendor portal.
+        """
         if self.mock:
             return WARRANTY_OPTIONS
-
-        # TODO: implement live warranty scraping
         raise NotImplementedError("Live warranty scraping not yet implemented.")
 
     def validate_stock(self, hardware_type: str, tier: str) -> bool:

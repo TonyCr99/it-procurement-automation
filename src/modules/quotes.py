@@ -47,7 +47,6 @@ class QuoteModule:
             )
 
         product = self.vendor.get_product(hardware_type, tier)
-        warranty_options = self.vendor.get_warranty_options()
 
         return {
             "ticket_id": ticket_id,
@@ -60,7 +59,6 @@ class QuoteModule:
             "stock": product["stock"],
             "specs_ok": specs_ok,
             "stock_ok": stock_ok,
-            "warranty_options": warranty_options,
             "price_mxn": product["price_mxn"],
         }
 
