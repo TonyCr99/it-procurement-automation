@@ -16,7 +16,7 @@ pyyaml==6.0.2
 python-dotenv==1.0.1
 
 # ------------------------------------------------------------
-# HTTP requests (Netsuite, Abasteo, notifications)
+# HTTP requests (Netsuite, notifications)
 # ------------------------------------------------------------
 requests==2.32.3
 
@@ -26,6 +26,14 @@ requests==2.32.3
 secure-smtplib==0.1.1
 
 # ------------------------------------------------------------
-# PDF handling (quotes)
+# PDF handling
+# Optional — used for internal reports in future versions
+# Vendor PDF is downloaded directly from portal
 # ------------------------------------------------------------
 fpdf2==2.8.2
+
+# ------------------------------------------------------------
+# Web scraping — vendor portal (live mode only)
+# After installing run: playwright install chromium
+# ------------------------------------------------------------
+playwright==1.44.0

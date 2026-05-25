@@ -63,6 +63,7 @@ class JiraConnector:
             "assignee": issue.fields.assignee.displayName if issue.fields.assignee else None,
             "reporter": issue.fields.reporter.displayName,
             "created": issue.fields.created,
+            "approver": issue.fields.customfield_approver if hasattr(issue.fields, 'customfield_approver') else None,
             "comments": [
                 {
                     "author": c.author.displayName,

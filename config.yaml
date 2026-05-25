@@ -113,3 +113,4 @@ finance:
   team_email: "${FINANCE_TEAM_EMAIL}"
   payment_lead_time_hours: 24       # Min hours to create order before payment date
   price_change_tolerance_pct: 0     # Alert if price changes by more than this %
+  tax_rate: 0.16                  # IVA 16% — adjust per country/region
