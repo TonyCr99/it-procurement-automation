@@ -51,6 +51,14 @@ seconds with no visual feedback — the CLI appears frozen.
 **Fix:** Add spinner or progress indicator using `rich` library.  
 **Next step:** Add `rich` to requirements.txt and implement spinner in CLI.
 
+### BUG-005 — Scripts not on PATH (Windows)
+**Status:** Open — low priority  
+**Description:** On some Windows environments, pip installs executable
+scripts to a folder not on PATH (pygmentize, playwright, markdown-it).  
+**Impact:** None — project runs via `python -m src.cli`, not direct scripts.  
+**Fix if needed:** Add Python Scripts folder to Windows PATH:
+`C:\Users\{user}\AppData\Local\Python\pythoncore-3.14-64\Scripts`
+
 ---
 
 ## Closed
