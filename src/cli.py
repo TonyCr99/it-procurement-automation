@@ -16,6 +16,7 @@ from src.modules.price_validator import PriceValidator
 from rich.console import Console
 from rich.spinner import Spinner
 from rich.live import Live
+from src.connectors.azure_ad import AzureADConnector
 
 # ------------------------------------------------------------
 # Helpers
@@ -249,7 +250,7 @@ def screen_quote(jira: JiraConnector, quotes: QuoteModule):
     pause()
 
 
-def screen_create_po(jira: JiraConnector, netsuite: NetsuiteConnector):
+def screen_create_po(jira: JiraConnector, netsuite: NetsuiteConnector, azure: AzureADConnector):
     """Creates a purchase order for an approved ticket."""
     clear()
     header()
@@ -303,12 +304,25 @@ def screen_create_po(jira: JiraConnector, netsuite: NetsuiteConnector):
         pause()
         return
 
-    # Cost center
-    cost_center = input("  Cost center (e.g. CC-MKT-001): ").strip()
-    if not cost_center:
-        print("\n  ❌ Cost center is required.")
-        pause()
-        return
+# Cost center — resolved automatically from Azure AD
+    try:
+        cc_data = with_spinner(
+            "Fetching user cost center...",
+            azure.get_user_cost_center,
+            f"{ticket['reporter'].lower().replace(' ', '.')}@company.com"
+        )
+        cost_center = cc_data["cc_name"]
+        cc_approver = cc_data["cc_approver_lvl1"]
+        print(f"\n  Cost center : {cost_center}")
+        print(f"  CC Approver : {cc_approver}")
+    except ValueError as e:
+        print(f"\n  ⚠️  Could not resolve cost center automatically: {e}")
+        cost_center = input("  Enter cost center manually: ").strip()
+        cc_approver = None
+        if not cost_center:
+            print("\n  ❌ Cost center is required.")
+            pause()
+            return
 
     # Confirm
     product_name = f"{ticket['hardware_type'].capitalize()} {ticket['hardware_tier'].replace('_', ' ').title()}"
@@ -338,6 +352,19 @@ def screen_create_po(jira: JiraConnector, netsuite: NetsuiteConnector):
     # Submit for approval
     netsuite.submit_for_approval(po["po_number"])
 
+     # Validate approver if CC data was resolved automatically
+    if cc_approver:
+        validation = with_spinner(
+            "Validating cost center approver...",
+            azure.validate_approver,
+            cc_data["cc_number"],
+            cc_approver
+        )
+        if not validation["match"]:
+            print(f"\n  ⚠️  {validation['recommendation']}")
+        else:
+            print(f"\n  ✅ Cost center approver verified.")
+            
     # Update Jira ticket
     jira.update_status(ticket_id, "Waiting for Delivery")
     jira.add_comment(
@@ -412,6 +439,7 @@ def main():
     quotes = QuoteModule()
     netsuite = NetsuiteConnector()
     validator = PriceValidator()
+    azure = AzureADConnector()
 
     while True:
         clear()
@@ -439,7 +467,7 @@ def main():
         elif choice == "5":
             screen_quote(jira, quotes)
         elif choice == "6":
-            screen_create_po(jira, netsuite)
+            screen_create_po(jira, netsuite, azure)
         elif choice == "7":
             screen_validate_price(jira, validator)
         elif choice == "0":
