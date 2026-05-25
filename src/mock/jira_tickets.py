@@ -9,7 +9,7 @@ MOCK_TICKETS = {
         "id": "IT-001",
         "summary": "MacBook Pro Power - Maria Garcia",
         "status": "New",
-        "po_reason": "replacement"
+        "po_reason": "replacement",
         "assignee": "Tony",
         "reporter": "Maria Garcia",
         "approver": "Carlos Lopez",

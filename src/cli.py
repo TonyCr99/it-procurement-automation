@@ -11,6 +11,7 @@ import os
 from src.config_loader import config
 from src.connectors.jira import JiraConnector
 from src.modules.quotes import QuoteModule 
+from src.connectors.netsuite import NetsuiteConnector
 
 # ------------------------------------------------------------
 # Helpers
@@ -227,6 +228,104 @@ def screen_quote(jira: JiraConnector, quotes: QuoteModule):
     quotes.submit_quote(ticket_id, total)
     pause()
 
+def screen_create_po(jira: JiraConnector, netsuite: NetsuiteConnector):
+    """Creates a purchase order for an approved ticket."""
+    clear()
+    header()
+    print("\n  CREATE PURCHASE ORDER\n")
+
+    ticket_id = input("  Enter ticket ID (e.g. IT-001): ").strip().upper()
+
+    try:
+        ticket = jira.get_ticket(ticket_id)
+    except ValueError as e:
+        print(f"\n  ❌ {e}")
+        pause()
+        return
+
+    # Validate ticket status
+    if ticket["status"] != "Waiting for Approval":
+        print(f"\n  ❌ Ticket must be in 'Waiting for Approval' status.")
+        print(f"     Current status: {ticket['status']}")
+        pause()
+        return
+
+    print(f"\n  Ticket   : {ticket['id']}")
+    print(f"  Reporter : {ticket['reporter']}")
+    print(f"  Approver : {ticket['approver']}")
+    print(f"  Hardware : {ticket['hardware_type'].capitalize()} — "
+          f"{ticket['hardware_tier'].replace('_', ' ').title()}")
+
+    # PO reason selection
+    print("\n  PURCHASE REASON\n")
+    reasons = list(config["hardware"]["po_reasons"].items())
+    for i, (key, label) in enumerate(reasons, 1):
+        print(f"  {i}. {label}")
+
+    reason_choice = input("\n  Select reason (number): ").strip()
+    try:
+        po_reason = reasons[int(reason_choice) - 1][0]
+    except (ValueError, IndexError):
+        print("\n  ❌ Invalid selection.")
+        pause()
+        return
+
+    # Total amount
+    try:
+        total = float(input("\n  Total MXN (from approved quote): $").strip().replace(",", ""))
+    except ValueError:
+        print("\n  ❌ Invalid amount.")
+        pause()
+        return
+
+    # Cost center
+    cost_center = input("  Cost center (e.g. CC-MKT-001): ").strip()
+    if not cost_center:
+        print("\n  ❌ Cost center is required.")
+        pause()
+        return
+
+    # Confirm
+    product_name = f"{ticket['hardware_type'].capitalize()} {ticket['hardware_tier'].replace('_', ' ').title()}"
+    note = f"EQUIPO DE COMPUTO - {product_name} - {config['hardware']['po_reasons'][po_reason]} - {ticket['reporter']} ({ticket_id})"
+
+    print(f"\n  PO PREVIEW\n")
+    print(f"  Note     : {note}")
+    print(f"  Total    : ${total:,.2f} MXN")
+    print(f"  Cost Ctr : {cost_center}")
+
+    confirm = input("\n  Create and submit PO? (y/n): ").strip().lower()
+    if confirm != "y":
+        print("\n  PO cancelled.")
+        pause()
+        return
+
+    # Create PO
+    po = netsuite.create_order(
+        ticket_id=ticket_id,
+        product_name=product_name,
+        total=total,
+        cost_center=cost_center,
+        po_reason=po_reason,
+        assigned_user=ticket["reporter"],
+    )
+
+    # Submit for approval
+    netsuite.submit_for_approval(po["po_number"])
+
+    # Update Jira ticket
+    jira.update_status(ticket_id, "Waiting for Delivery")
+    jira.add_comment(
+        ticket_id,
+        f"Purchase order created: {po['po_number']}\n"
+        f"Total: ${total:,.2f} MXN\n"
+        f"Status: Sent to Finance Approve"
+    )
+
+    print(f"\n✅ PO {po['po_number']} created and submitted.")
+    print(f"   Jira status updated to: Waiting for Delivery")
+    pause()
+
 # ------------------------------------------------------------
 # Main menu
 # ------------------------------------------------------------
@@ -234,6 +333,7 @@ def screen_quote(jira: JiraConnector, quotes: QuoteModule):
 def main():
     jira = JiraConnector()
     quotes = QuoteModule()
+    netsuite = NetsuiteConnector()
 
     while True:
         clear()
@@ -243,6 +343,7 @@ def main():
         print("  3. Update ticket status")
         print("  4. Add comment to ticket")
         print("  5. New quote")
+        print("  6. Create purchase order")
         print("\n  0. Exit")
         print("\n" + "=" * 52)
 
@@ -258,6 +359,8 @@ def main():
             screen_add_comment(jira)
         elif choice == "5":
             screen_quote(jira, quotes)
+        elif choice == "6":
+            screen_create_po(jira, netsuite)
         elif choice == "0":
             clear()
             print("\n  Goodbye. 👋\n")
