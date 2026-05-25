@@ -3,96 +3,149 @@
 # ============================================================
 # Simulates product catalog and quotes from vendor portal.
 # Prices in MXN — update periodically to reflect market rates.
+# Selection criteria: meets specs → stock >= 20 → lowest price
 
 MOCK_CATALOG = {
     "macbook": {
-        "standard": {
-            "sku": "APPLE-MB-STD-001",
-            "name": "MacBook Air 13\"",
-            "specs": {
-                "chip": "Apple M4",
-                "ram": "16GB",
-                "storage": "256GB SSD",
-                "display": "13.6 inch Liquid Retina"
+        "standard": [
+            {
+                "sku": "MQLD3E/A",
+                "name": 'Apple MacBook Air 13.6"',
+                "specs": {
+                    "chip": "Apple M4",
+                    "ram_gb": 16,
+                    "storage_gb": 512,
+                    "screen_inch": 13.6,
+                },
+                "price_mxn": 28999.00,
+                "stock": 45,
             },
-            "price_mxn": 28999.00,
-            "stock": 45,
-            "meets_minimum": False,   # 256GB below 512GB requirement
-            "notes": "Below spec — 256GB SSD"
-        },
-        "standard_plus": {
-            "sku": "APPLE-MB-STD-PLUS-001",
-            "name": "MacBook Air 13\"",
-            "specs": {
-                "chip": "Apple M4",
-                "ram": "16GB",
-                "storage": "512GB SSD",
-                "display": "13.6 inch Liquid Retina"
+            {
+                "sku": "MQLE3E/A",
+                "name": 'Apple MacBook Air 13.6"',
+                "specs": {
+                    "chip": "Apple M4",
+                    "ram_gb": 16,
+                    "storage_gb": 256,
+                    "screen_inch": 13.6,
+                },
+                "price_mxn": 24999.00,
+                "stock": 32,
             },
-            "price_mxn": 34999.00,
-            "stock": 32,
-            "meets_minimum": True,
-            "notes": ""
-        },
-        "power": {
-            "sku": "APPLE-MB-PWR-001",
-            "name": "MacBook Pro 14\"",
-            "specs": {
-                "chip": "Apple M4 Pro",
-                "ram": "24GB",
-                "storage": "512GB SSD",
-                "display": "14.2 inch Liquid Retina XDR"
+        ],
+        "standard_plus": [
+            {
+                "sku": "MX2Y3E/A",
+                "name": 'Apple MacBook Pro 14.2"',
+                "specs": {
+                    "chip": "Apple M4 Pro",
+                    "ram_gb": 24,
+                    "storage_gb": 512,
+                    "screen_inch": 14.2,
+                },
+                "price_mxn": 52129.00,
+                "stock": 28,
             },
-            "price_mxn": 54999.00,
-            "stock": 28,
-            "meets_minimum": True,
-            "notes": ""
-        }
+            {
+                "sku": "MX2F3E/A",
+                "name": 'Apple MacBook Pro 14.2"',
+                "specs": {
+                    "chip": "Apple M4 Pro",
+                    "ram_gb": 24,
+                    "storage_gb": 512,
+                    "screen_inch": 14.2,
+                },
+                "price_mxn": 54999.00,
+                "stock": 6,
+            },
+        ],
+        "power": [
+            {
+                "sku": "MGDN4E/A",
+                "name": 'Apple MacBook Pro 16.2"',
+                "specs": {
+                    "chip": "Apple M5 Pro",
+                    "ram_gb": 24,
+                    "storage_gb": 1024,
+                    "screen_inch": 16.2,
+                },
+                "price_mxn": 48369.00,
+                "stock": 45,
+            },
+            {
+                "sku": "MDE64E/A",
+                "name": 'Apple MacBook Pro 16.2"',
+                "specs": {
+                    "chip": "Apple M5",
+                    "ram_gb": 16,
+                    "storage_gb": 512,
+                    "screen_inch": 16.2,
+                },
+                "price_mxn": 41839.00,
+                "stock": 15,
+            },
+        ],
     },
     "windows": {
-        "standard": {
-            "sku": "LNV-WIN-STD-001",
-            "name": "Lenovo ThinkPad E14 Gen 5",
-            "specs": {
-                "processor": "Intel Core i5-1335U (13th Gen)",
-                "ram": "16GB DDR4",
-                "storage": "512GB SSD",
-                "display": "14 inch FHD IPS"
+        "standard": [
+            {
+                "sku": "21HN0044US",
+                "name": "Lenovo ThinkPad E14 Gen 5",
+                "specs": {
+                    "processor": "Intel Core i5-1335U",
+                    "processor_gen": 13,
+                    "ram_gb": 16,
+                    "storage_gb": 512,
+                    "screen_inch": 14.0,
+                },
+                "price_mxn": 18999.00,
+                "stock": 67,
             },
-            "price_mxn": 18999.00,
-            "stock": 67,
-            "meets_minimum": True,
-            "notes": ""
-        },
-        "standard_plus": {
-            "sku": "LNV-WIN-STD-PLUS-001",
-            "name": "Lenovo ThinkPad E16 Gen 2",
-            "specs": {
-                "processor": "Intel Core i7-1355U (13th Gen)",
-                "ram": "16GB DDR4",
-                "storage": "512GB SSD",
-                "display": "16 inch FHD IPS"
+            {
+                "sku": "21HN0045US",
+                "name": "Lenovo ThinkPad E14 Gen 5",
+                "specs": {
+                    "processor": "Intel Core i5-1335U",
+                    "processor_gen": 13,
+                    "ram_gb": 16,
+                    "storage_gb": 256,
+                    "screen_inch": 14.0,
+                },
+                "price_mxn": 16999.00,
+                "stock": 42,
             },
-            "price_mxn": 24999.00,
-            "stock": 41,
-            "meets_minimum": True,
-            "notes": ""
-        },
-        "power": {
-            "sku": "LNV-WIN-PWR-001",
-            "name": "Lenovo ThinkPad X1 Carbon Gen 12",
-            "specs": {
-                "processor": "Intel Core i7-1365U (13th Gen)",
-                "ram": "32GB DDR5",
-                "storage": "1TB SSD",
-                "display": "14 inch 2.8K OLED"
+        ],
+        "standard_plus": [
+            {
+                "sku": "21HN0050US",
+                "name": "Lenovo ThinkPad E14 Gen 5",
+                "specs": {
+                    "processor": "Intel Core i7-1355U",
+                    "processor_gen": 13,
+                    "ram_gb": 16,
+                    "storage_gb": 512,
+                    "screen_inch": 14.0,
+                },
+                "price_mxn": 24999.00,
+                "stock": 41,
             },
-            "price_mxn": 42999.00,
-            "stock": 23,
-            "meets_minimum": True,
-            "notes": ""
-        }
-    }
+        ],
+        "power": [
+            {
+                "sku": "21HN0060US",
+                "name": "Lenovo ThinkPad X1 Carbon Gen 12",
+                "specs": {
+                    "processor": "Intel Core i7-1365U",
+                    "processor_gen": 13,
+                    "ram_gb": 32,
+                    "storage_gb": 1024,
+                    "screen_inch": 15.6,
+                },
+                "price_mxn": 42999.00,
+                "stock": 23,
+            },
+        ],
+    },
 }
 
 # Minimum stock required to proceed with purchase
@@ -104,16 +157,20 @@ WARRANTY_OPTIONS = {
         "label": "No warranty",
         "price_mxn": 0.00
     },
-    "1_year": {
+    "applecare_3y": {
+        "label": "AppleCare+ 3 Years",
+        "price_mxn": 4889.00
+    },
+    "warranty_1y": {
         "label": "1 Year Extended Warranty",
         "price_mxn": 1299.00
     },
-    "2_year": {
+    "warranty_2y": {
         "label": "2 Year Extended Warranty",
         "price_mxn": 2199.00
     },
-    "3_year": {
+    "warranty_3y": {
         "label": "3 Year Extended Warranty",
         "price_mxn": 2999.00
-    }
+    },
 }
