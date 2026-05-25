@@ -36,6 +36,7 @@ Common pain points:
 - 📦 Tracks delivery status and closes the ticket on confirmation
 
 ---
+> ✅ Tested in production — Jira live mode verified May 2026
 
 ## Tech Stack
 
@@ -54,8 +55,12 @@ Common pain points:
 - [x] Quote generation module
 - [x] Netsuite purchase order connector
 - [x] Price change validation
+- [x] Setup wizard — guided first-time configuration
+- [ ] Fix: Jira custom fields mapping in live mode
+- [ ] Fix: Loading indicator during API calls
 - [ ] Azure AD — cost center lookup by user
-- [ ] Setup wizard — guided first-time configuration
+- [ ] Vendor scraper — Playwright live mode
+- [ ] Netsuite live mode — OAuth configuration
 - [ ] Web dashboard
 - [ ] Multi-tenant support
 
