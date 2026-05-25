@@ -12,6 +12,7 @@ from src.config_loader import config
 from src.connectors.jira import JiraConnector
 from src.modules.quotes import QuoteModule 
 from src.connectors.netsuite import NetsuiteConnector
+from src.modules.price_validator import PriceValidator
 
 # ------------------------------------------------------------
 # Helpers
@@ -326,6 +327,55 @@ def screen_create_po(jira: JiraConnector, netsuite: NetsuiteConnector):
     print(f"   Jira status updated to: Waiting for Delivery")
     pause()
 
+def screen_validate_price(jira: JiraConnector, validator: PriceValidator):
+    """Validates current vendor price against approved quote."""
+    clear()
+    header()
+    print("\n  PRICE VALIDATION\n")
+
+    ticket_id = input("  Enter ticket ID (e.g. IT-001): ").strip().upper()
+
+    try:
+        ticket = jira.get_ticket(ticket_id)
+    except ValueError as e:
+        print(f"\n  ❌ {e}")
+        pause()
+        return
+
+    try:
+        approved_total = float(
+            input("  Approved quote total MXN: $").strip().replace(",", "")
+        )
+    except ValueError:
+        print("\n  ❌ Invalid amount.")
+        pause()
+        return
+
+    result = validator.validate(
+        ticket_id=ticket_id,
+        approved_total=approved_total,
+        hardware_type=ticket["hardware_type"],
+        hardware_tier=ticket["hardware_tier"],
+    )
+
+    print(f"\n  Approved : ${result['approved_total']:,.2f} MXN")
+    print(f"  Current  : ${result['current_price']:,.2f} MXN")
+    print(f"  Result   : {result['recommendation']}")
+
+    if not result["safe_to_proceed"]:
+        confirm = input("\n  Trigger re-approval flow? (y/n): ").strip().lower()
+        if confirm == "y":
+            validator.handle_price_change(
+                validation=result,
+                approver_name=ticket["approver"],
+                approver_email=f"{ticket['approver'].lower().replace(' ', '.')}@company.com",
+                product_name=ticket["summary"],
+            )
+    else:
+        print("\n  ✅ Safe to proceed with payment.")
+
+    pause()
+
 # ------------------------------------------------------------
 # Main menu
 # ------------------------------------------------------------
@@ -334,6 +384,7 @@ def main():
     jira = JiraConnector()
     quotes = QuoteModule()
     netsuite = NetsuiteConnector()
+    validator = PriceValidator()
 
     while True:
         clear()
@@ -344,6 +395,7 @@ def main():
         print("  4. Add comment to ticket")
         print("  5. New quote")
         print("  6. Create purchase order")
+        print("  7. Validate price before payment")
         print("\n  0. Exit")
         print("\n" + "=" * 52)
 
@@ -361,6 +413,8 @@ def main():
             screen_quote(jira, quotes)
         elif choice == "6":
             screen_create_po(jira, netsuite)
+        elif choice == "7":
+            screen_validate_price(jira, validator)
         elif choice == "0":
             clear()
             print("\n  Goodbye. 👋\n")

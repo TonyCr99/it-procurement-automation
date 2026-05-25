@@ -42,6 +42,7 @@ MOCK_TICKETS = {
     "IT-003": {
         "id": "IT-003",
         "summary": "Windows Standard Plus - Sofia Ramos",
+        "status": "Waiting for Delivery",
         "po_reason": "equipment_change",
         "po_reason": "new_joiner",
         "assignee": "Tony",

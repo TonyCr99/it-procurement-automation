@@ -52,8 +52,8 @@ Common pain points:
 - [x] Jira connector — read and update tickets
 - [x] Interactive CLI menu
 - [x] Quote generation module
-- [ ] Netsuite purchase order connector
-- [ ] Price change validation
+- [x] Netsuite purchase order connector
+- [x] Price change validation
 - [ ] Azure AD — cost center lookup by user
 - [ ] Setup wizard — guided first-time configuration
 - [ ] Web dashboard
