@@ -9,6 +9,7 @@ MOCK_TICKETS = {
         "id": "IT-001",
         "summary": "MacBook Pro Power - Maria Garcia",
         "status": "New",
+        "po_reason": "replacement"
         "assignee": "Tony",
         "reporter": "Maria Garcia",
         "approver": "Carlos Lopez",
@@ -22,6 +23,7 @@ MOCK_TICKETS = {
         "id": "IT-002",
         "summary": "Windows Standard - Juan Perez",
         "status": "Waiting for Approval",
+        "po_reason": "new_joiner",
         "assignee": "Tony",
         "reporter": "Juan Perez",
         "approver": "Ana Martinez",
@@ -40,7 +42,8 @@ MOCK_TICKETS = {
     "IT-003": {
         "id": "IT-003",
         "summary": "Windows Standard Plus - Sofia Ramos",
-        "status": "Waiting for Delivery",
+        "po_reason": "equipment_change",
+        "po_reason": "new_joiner",
         "assignee": "Tony",
         "reporter": "Sofia Ramos",
         "approver": "Carlos Lopez",

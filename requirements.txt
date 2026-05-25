@@ -37,3 +37,8 @@ fpdf2==2.8.2
 # After installing run: playwright install chromium
 # ------------------------------------------------------------
 playwright==1.44.0
+
+# ------------------------------------------------------------
+# Netsuite authentication (live mode only)
+# ------------------------------------------------------------
+requests-oauthlib==1.3.1

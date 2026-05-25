@@ -30,6 +30,11 @@ hardware:
     power:
       label: "Power"
       description: "Heavy workload — development, design, data"
+      
+  po_reasons:
+    new_joiner: "NEW JOINER"
+    equipment_change: "CAMBIO DE EQUIPO"
+    replacement: "REPOSICION DE EQUIPO"
 
 # ------------------------------------------------------------
 # Ticket workflow (Jira)
