@@ -45,8 +45,9 @@ class VendorConnector:
         self._browser = self._playwright.chromium.launch(headless=True)
         self._page = self._browser.new_page()
 
-        self._page.goto(env("VENDOR_URL"))
-        self._page.fill("input[name='email']", env("VENDOR_USER"))
+        self._page.goto(f"{env('VENDOR_URL')}/login")
+        self._page.wait_for_load_state("networkidle")
+        self._page.fill("input[name='user']", env("VENDOR_USER"))
         self._page.fill("input[name='password']", env("VENDOR_PASSWORD"))
         self._page.click("button[type='submit']")
         self._page.wait_for_load_state("networkidle")
@@ -65,7 +66,6 @@ class VendorConnector:
         specs = product["specs"]
 
         if hardware_type == "macbook":
-            # Validate chip generation
             chip = specs.get("chip", "")
             chip_min = required["chip_min"]
             chip_gen = self._parse_apple_chip_gen(chip)
@@ -74,19 +74,15 @@ class VendorConnector:
                 return False
 
         elif hardware_type == "windows":
-            # Validate processor generation
             if specs.get("processor_gen", 0) < required["processor_gen_min"]:
                 return False
 
-        # Validate RAM
         if specs.get("ram_gb", 0) < required["ram_min_gb"]:
             return False
 
-        # Validate storage
         if specs.get("storage_gb", 0) < required["storage_min_gb"]:
             return False
 
-        # Validate screen size
         if specs.get("screen_inch", 0) < required["screen_inch"]:
             return False
 
@@ -123,7 +119,6 @@ class VendorConnector:
                 f"No products found for {hardware_type} {tier}."
             )
 
-        # Filter by specs
         spec_qualified = [
             p for p in candidates
             if self._meets_specs(p, hardware_type, tier)
@@ -135,7 +130,6 @@ class VendorConnector:
                 f"Check config.yaml hardware.specs section."
             )
 
-        # Filter by stock
         stock_qualified = [
             p for p in spec_qualified
             if p["stock"] >= self.min_stock
@@ -149,7 +143,6 @@ class VendorConnector:
                 f"but all below minimum stock."
             )
 
-        # Select lowest price
         best = min(stock_qualified, key=lambda p: p["price_mxn"])
 
         print(f"✅ Selected: {best['name']} ({best['sku']})")
@@ -157,10 +150,6 @@ class VendorConnector:
         print(f"   Stock : {best['stock']} units")
 
         return best
-
-    # ----------------------------------------------------------
-    # Legacy method — kept for compatibility
-    # ----------------------------------------------------------
 
     def get_product(self, hardware_type: str, tier: str) -> dict:
         """Alias for get_best_product — selects optimal product."""
@@ -223,7 +212,7 @@ class VendorConnector:
             return False
 
     # ----------------------------------------------------------
-    # Live mode — Playwright scraper (TODO)
+    # Live mode — Playwright scraper
     # ----------------------------------------------------------
 
     def _scrape_products(
@@ -232,12 +221,162 @@ class VendorConnector:
         """
         Scrapes vendor portal for products matching hardware type and tier.
         Returns list of product dicts with same structure as mock catalog.
-        TODO: implement when testing on live portal.
         """
-        raise NotImplementedError(
-            "Live vendor scraping not yet implemented.\n"
-            "Set VENDOR_MOCK=true to use mock catalog."
+        search_term = "MacBook" if hardware_type == "macbook" else "Lenovo ThinkPad"
+
+        self._page.fill("input[name='searchparam']", search_term)
+        self._page.keyboard.press("Enter")
+        self._page.wait_for_load_state("networkidle")
+
+        products = []
+        cards = self._page.query_selector_all(".c-product-price")
+
+        for card in cards:
+            try:
+                name_el = card.query_selector(
+                    "[data-testid='cpx-truncated__text']"
+                )
+                if not name_el:
+                    continue
+                name = name_el.get_attribute("title") or name_el.inner_text()
+                name = name.split("―")[0].strip()
+
+                price_el = card.query_selector(".cpx-text--price-total")
+                if not price_el:
+                    continue
+                price_text = price_el.inner_text()
+                price = float(
+                    price_text.replace("$", "")
+                    .replace(",", "")
+                    .strip()
+                )
+
+                stock_el = card.query_selector(".cpx-text--caption-bold")
+                stock = 0
+                if stock_el:
+                    stock_text = stock_el.inner_text()
+                    stock = int("".join(filter(str.isdigit, stock_text)))
+
+                link_el = card.query_selector("a[href]")
+                sku = ""
+                if link_el:
+                    href = link_el.get_attribute("href") or ""
+                    sku = href.split("/")[-1]
+
+                specs = self._parse_specs_from_name(name, hardware_type)
+
+                products.append({
+                    "sku": sku,
+                    "name": name,
+                    "specs": specs,
+                    "price_mxn": price,
+                    "stock": stock,
+                })
+
+            except Exception:
+                continue
+
+        return products
+
+    def _parse_specs_from_name(
+        self, name: str, hardware_type: str
+    ) -> dict:
+        """
+        Parses product specs from the product name string.
+        Used in live mode to extract RAM, storage, screen, chip/processor.
+        """
+        name_upper = name.upper()
+        specs = {}
+
+        for ram in [64, 48, 36, 32, 24, 16, 8]:
+            if f"{ram}GB" in name_upper:
+                specs["ram_gb"] = ram
+                break
+
+        for storage, label in [
+            (2048, "2TB"), (1024, "1TB"),
+            (512, "512GB"), (256, "256GB")
+        ]:
+            if label in name_upper:
+                specs["storage_gb"] = storage
+                break
+
+        for size in [16.2, 16.0, 15.6, 14.2, 14.0, 13.6, 13.3, 13.0]:
+            if str(size) in name or f'{size}"' in name:
+                specs["screen_inch"] = size
+                break
+
+        if hardware_type == "macbook":
+            for chip in ["M5 PRO", "M5 MAX", "M5", "M4 PRO", "M4 MAX", "M4"]:
+                if chip in name_upper:
+                    specs["chip"] = f"Apple {chip.title()}"
+                    break
+        else:
+            for gen in range(14, 10, -1):
+                if (
+                    f"{gen}TH" in name_upper
+                    or f"{gen}VA" in name_upper
+                    or f"GEN {gen}" in name_upper
+                ):
+                    specs["processor_gen"] = gen
+                    specs["processor"] = self._extract_processor(name)
+                    break
+
+        return specs
+
+    def _extract_processor(self, name: str) -> str:
+        """Extracts processor model from product name."""
+        name_upper = name.upper()
+        for model in ["I9", "I7", "I5", "I3"]:
+            if model in name_upper:
+                idx = name_upper.find(model)
+                return name[idx:idx + 12].strip()
+        return "Intel Core"
+
+    def _scrape_quote(self, product: dict) -> str:
+        """
+        Adds product to cart, handles warranty modal,
+        and generates quote PDF from vendor portal.
+        Returns the path to the downloaded PDF.
+        """
+        self._page.fill("input[name='searchparam']", product["sku"])
+        self._page.keyboard.press("Enter")
+        self._page.wait_for_load_state("networkidle")
+
+        add_btn = self._page.query_selector(
+            "[data-testid='add-to-cart-button']"
         )
+        if not add_btn:
+            raise ValueError(
+                f"Add to cart button not found for {product['sku']}"
+            )
+        add_btn.click()
+        self._page.wait_for_timeout(1500)
+
+        try:
+            continue_btn = self._page.query_selector(
+                "text=Continuar comprando"
+            )
+            if continue_btn:
+                continue_btn.click()
+                self._page.wait_for_timeout(1000)
+        except Exception:
+            pass
+
+        self._page.goto(f"{env('VENDOR_URL')}/carrito-de-compras/")
+        self._page.wait_for_load_state("networkidle")
+
+        quote_btn = self._page.query_selector("text=Crear cotización")
+        if not quote_btn:
+            raise ValueError("Create quote button not found in cart.")
+
+        with self._page.expect_download() as download_info:
+            quote_btn.click()
+        download = download_info.value
+        pdf_path = f"quote_{product['sku']}.pdf"
+        download.save_as(pdf_path)
+        print(f"✅ Quote PDF saved: {pdf_path}")
+        return pdf_path
 
     def close(self):
         """Closes browser session (live mode only)."""
