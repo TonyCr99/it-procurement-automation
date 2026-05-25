@@ -14,7 +14,8 @@
 
 from src.config_loader import config, env
 from datetime import datetime
-from src.mock.jira_tickets import MOCK_TICKETS # Mock data — simulates real Jira tickets for testing
+from src.mock.jira_tickets import MOCK_TICKETS
+
 
 # ------------------------------------------------------------
 # Jira Connector
@@ -35,13 +36,24 @@ class JiraConnector:
             self._connect()
 
     def _connect(self):
-        """Connects to real Jira instance using credentials from .env"""
-        from jira import JIRA
-        self.client = JIRA(
-            server=env("JIRA_URL"),
-            basic_auth=(env("JIRA_USER"), env("JIRA_API_TOKEN"))
+        """Connects to real Jira instance using API v3."""
+        import requests
+        from requests.auth import HTTPBasicAuth
+
+        self.base_url = f"{env('JIRA_URL')}/rest/api/3"
+        self.auth = HTTPBasicAuth(env("JIRA_USER"), env("JIRA_API_TOKEN"))
+        self.headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+        response = requests.get(
+            f"{self.base_url}/myself",
+            headers=self.headers,
+            auth=self.auth,
         )
-        print("✅ Connected to Jira.")
+        response.raise_for_status()
+        print(f"✅ Connected to Jira as {response.json()['displayName']}")
 
     # ----------------------------------------------------------
     # Read operations
@@ -55,23 +67,40 @@ class JiraConnector:
                 raise ValueError(f"Ticket '{ticket_id}' not found.")
             return ticket
 
-        issue = self.client.issue(ticket_id)
+        import requests
+
+        response = requests.get(
+            f"{self.base_url}/issue/{ticket_id}",
+            headers=self.headers,
+            auth=self.auth,
+            params={"fields": "summary,status,assignee,reporter,comment,created"},
+        )
+        response.raise_for_status()
+        issue = response.json()
+        fields = issue["fields"]
+
         return {
-            "id": issue.key,
-            "summary": issue.fields.summary,
-            "status": issue.fields.status.name,
-            "assignee": issue.fields.assignee.displayName if issue.fields.assignee else None,
-            "reporter": issue.fields.reporter.displayName,
-            "created": issue.fields.created,
-            "approver": issue.fields.customfield_approver if hasattr(issue.fields, 'customfield_approver') else None,
+            "id": issue["key"],
+            "summary": fields["summary"],
+            "status": fields["status"]["name"],
+            "assignee": (
+                fields["assignee"]["displayName"] if fields.get("assignee") else None
+            ),
+            "reporter": fields["reporter"]["displayName"],
+            "approver": None,
+            "cost_center": None,
+            "hardware_type": None,
+            "hardware_tier": None,
+            "po_reason": None,
+            "created": fields["created"],
             "comments": [
                 {
-                    "author": c.author.displayName,
-                    "body": c.body,
-                    "created": c.created
+                    "author": c["author"]["displayName"],
+                    "body": c["body"],
+                    "created": c["created"],
                 }
-                for c in issue.fields.comment.comments
-            ]
+                for c in fields["comment"]["comments"]
+            ],
         }
 
     def get_active_tickets(self) -> list:
@@ -79,11 +108,21 @@ class JiraConnector:
         if self.mock:
             return [t for t in MOCK_TICKETS.values() if t["status"] != "Closed"]
 
+        import requests
+
         project_key = config["ticket"]["project_key"]
-        issues = self.client.search_issues(
-            f'project={project_key} AND status != Closed ORDER BY created DESC'
+        response = requests.get(
+            f"{self.base_url}/search/jql",
+            headers=self.headers,
+            auth=self.auth,
+            params={
+                "jql": f"project={project_key} AND status != Closed ORDER BY created DESC",
+                "fields": "summary,status,assignee,reporter,comment,created",
+            },
         )
-        return [self.get_ticket(i.key) for i in issues]
+        response.raise_for_status()
+        issues = response.json()["issues"]
+        return [self.get_ticket(i["key"]) for i in issues]
 
     # ----------------------------------------------------------
     # Write operations
@@ -99,28 +138,63 @@ class JiraConnector:
             print(f"✅ [{ticket_id}] Status: '{old_status}' → '{new_status}'")
             return
 
-        transitions = self.client.transitions(ticket_id)
-        target = next(
-            (t for t in transitions if t["name"] == new_status), None
-        )
+        import requests
+
+        transitions = requests.get(
+            f"{self.base_url}/issue/{ticket_id}/transitions",
+            headers=self.headers,
+            auth=self.auth,
+        ).json()["transitions"]
+
+        target = next((t for t in transitions if t["name"] == new_status), None)
         if not target:
-            raise ValueError(f"Transition '{new_status}' not available for {ticket_id}.")
-        self.client.transition_issue(ticket_id, target["id"])
+            raise ValueError(
+                f"Transition '{new_status}' not available for {ticket_id}."
+            )
+
+        requests.post(
+            f"{self.base_url}/issue/{ticket_id}/transitions",
+            headers=self.headers,
+            auth=self.auth,
+            json={"transition": {"id": target["id"]}},
+        )
+        print(f"✅ [{ticket_id}] Status updated to '{new_status}'")
 
     def add_comment(self, ticket_id: str, comment: str) -> None:
         """Adds a comment to a ticket."""
         if self.mock:
             if ticket_id not in MOCK_TICKETS:
                 raise ValueError(f"Ticket '{ticket_id}' not found.")
-            MOCK_TICKETS[ticket_id]["comments"].append({
-                "author": "System",
-                "body": comment,
-                "created": datetime.now().isoformat()
-            })
+            MOCK_TICKETS[ticket_id]["comments"].append(
+                {
+                    "author": "System",
+                    "body": comment,
+                    "created": datetime.now().isoformat(),
+                }
+            )
             print(f"✅ [{ticket_id}] Comment added.")
             return
 
-        self.client.add_comment(ticket_id, comment)
+        import requests
+
+        requests.post(
+            f"{self.base_url}/issue/{ticket_id}/comments",
+            headers=self.headers,
+            auth=self.auth,
+            json={
+                "body": {
+                    "type": "doc",
+                    "version": 1,
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [{"type": "text", "text": comment}],
+                        }
+                    ],
+                }
+            },
+        )
+        print(f"✅ [{ticket_id}] Comment added.")
 
 
 # ------------------------------------------------------------
@@ -138,7 +212,7 @@ if __name__ == "__main__":
     print(f"  ID      : {ticket['id']}")
     print(f"  Summary : {ticket['summary']}")
     print(f"  Status  : {ticket['status']}")
-    print(f"  Manager : {ticket['manager']}")
+    print(f"  Approver: {ticket['approver']}")
 
     print("\n--- Update status ---")
     jira.update_status("IT-001", "Waiting for Approval")
