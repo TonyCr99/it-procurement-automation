@@ -9,6 +9,7 @@
 
 from src.connectors.jira import JiraConnector
 from src.connectors.vendor import VendorConnector
+from src.modules.notifications import NotificationModule
 
 
 class QuoteModule:
@@ -21,6 +22,7 @@ class QuoteModule:
     def __init__(self):
         self.jira = JiraConnector()
         self.vendor = VendorConnector()
+        self.notifications = NotificationModule()
 
     # ----------------------------------------------------------
     # Quote generation
@@ -102,6 +104,14 @@ class QuoteModule:
         print(f"   Total   : ${total:,.2f} MXN")
         print(f"   Approver: {quote['approver']}")
 
+        self.notifications.notify_approval_request(
+            approver_email=f"{quote['approver'].lower().replace(' ', '.')}@company.com",
+            approver_name=quote["approver"],
+            reporter_name=quote["reporter"],
+            ticket_id=ticket_id,
+            product_name=quote["product_name"],
+            total=total
+        )
 
 # ------------------------------------------------------------
 # Quick test
