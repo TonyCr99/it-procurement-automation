@@ -43,13 +43,12 @@ custom fields in Jira with company-specific field IDs.
 
 ---
 
+## Closed
+
 ### BUG-004 — No loading indicator during API calls
-**Status:** Open  
-**File:** `src/cli.py`  
-**Description:** When running in live mode, API calls to Jira take a few
-seconds with no visual feedback — the CLI appears frozen.  
-**Fix:** Add spinner or progress indicator using `rich` library.  
-**Next step:** Add `rich` to requirements.txt and implement spinner in CLI.
+**Status:** Fixed  
+**Fix:** Added `rich` spinner via `with_spinner()` helper in `src/cli.py`.
+Displays animated dots during Jira API calls in live mode.
 
 ### BUG-005 — Scripts not on PATH (Windows)
 **Status:** Open — low priority  

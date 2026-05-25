@@ -10,13 +10,28 @@
 import os
 from src.config_loader import config
 from src.connectors.jira import JiraConnector
-from src.modules.quotes import QuoteModule 
+from src.modules.quotes import QuoteModule
 from src.connectors.netsuite import NetsuiteConnector
 from src.modules.price_validator import PriceValidator
+from rich.console import Console
+from rich.spinner import Spinner
+from rich.live import Live
 
 # ------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------
+
+console = Console()
+
+
+def with_spinner(message: str, func, *args, **kwargs):
+    """
+    Runs a function while displaying a loading spinner.
+    Usage: result = with_spinner("Loading tickets...", jira.get_active_tickets)
+    """
+    with Live(Spinner("dots", text=message), console=console, transient=True):
+        return func(*args, **kwargs)
+
 
 def clear():
     """Clears the terminal screen."""
@@ -41,13 +56,14 @@ def pause():
 # Screens
 # ------------------------------------------------------------
 
+
 def screen_tickets(jira: JiraConnector):
     """Shows all active tickets."""
     clear()
     header()
     print("\n  ACTIVE TICKETS\n")
 
-    tickets = jira.get_active_tickets()
+    tickets = with_spinner("Fetching tickets from Jira...", jira.get_active_tickets)
 
     if not tickets:
         print("  No active tickets found.")
@@ -71,7 +87,7 @@ def screen_ticket_detail(jira: JiraConnector):
     ticket_id = input("  Enter ticket ID (e.g. IT-001): ").strip().upper()
 
     try:
-        t = jira.get_ticket(ticket_id)
+        t = with_spinner(f"Loading {ticket_id}...", jira.get_ticket, ticket_id)
     except ValueError as e:
         print(f"\n  ❌ {e}")
         pause()
@@ -83,7 +99,9 @@ def screen_ticket_detail(jira: JiraConnector):
     print(f"  Reporter : {t['reporter']}")
     print(f"  Approver  : {t['approver']}")
     print(f"  Cost Ctr : {t['cost_center']}")
-    print(f"  Hardware : {t['hardware_type'].capitalize()} — {t['hardware_tier'].replace('_', ' ').title()}")
+    print(
+        f"  Hardware : {t['hardware_type'].capitalize()} — {t['hardware_tier'].replace('_', ' ').title()}"
+    )
     print(f"  Created  : {t['created']}")
 
     if t["comments"]:
@@ -157,6 +175,7 @@ def screen_add_comment(jira: JiraConnector):
     jira.add_comment(ticket_id, comment)
     pause()
 
+
 def screen_quote(jira: JiraConnector, quotes: QuoteModule):
     """Runs the full quote flow for a ticket."""
     clear()
@@ -166,7 +185,7 @@ def screen_quote(jira: JiraConnector, quotes: QuoteModule):
     ticket_id = input("  Enter ticket ID (e.g. IT-001): ").strip().upper()
 
     try:
-        quote = quotes.generate_quote(ticket_id)
+        quote = with_spinner(f"Generating quote for {ticket_id}...", quotes.generate_quote, ticket_id)
     except ValueError as e:
         print(f"\n  ❌ {e}")
         pause()
@@ -229,6 +248,7 @@ def screen_quote(jira: JiraConnector, quotes: QuoteModule):
     quotes.submit_quote(ticket_id, total)
     pause()
 
+
 def screen_create_po(jira: JiraConnector, netsuite: NetsuiteConnector):
     """Creates a purchase order for an approved ticket."""
     clear()
@@ -238,7 +258,7 @@ def screen_create_po(jira: JiraConnector, netsuite: NetsuiteConnector):
     ticket_id = input("  Enter ticket ID (e.g. IT-001): ").strip().upper()
 
     try:
-        ticket = jira.get_ticket(ticket_id)
+        ticket = with_spinner(f"Loading {ticket_id}...", jira.get_ticket, ticket_id)
     except ValueError as e:
         print(f"\n  ❌ {e}")
         pause()
@@ -254,8 +274,10 @@ def screen_create_po(jira: JiraConnector, netsuite: NetsuiteConnector):
     print(f"\n  Ticket   : {ticket['id']}")
     print(f"  Reporter : {ticket['reporter']}")
     print(f"  Approver : {ticket['approver']}")
-    print(f"  Hardware : {ticket['hardware_type'].capitalize()} — "
-          f"{ticket['hardware_tier'].replace('_', ' ').title()}")
+    print(
+        f"  Hardware : {ticket['hardware_type'].capitalize()} — "
+        f"{ticket['hardware_tier'].replace('_', ' ').title()}"
+    )
 
     # PO reason selection
     print("\n  PURCHASE REASON\n")
@@ -273,7 +295,9 @@ def screen_create_po(jira: JiraConnector, netsuite: NetsuiteConnector):
 
     # Total amount
     try:
-        total = float(input("\n  Total MXN (from approved quote): $").strip().replace(",", ""))
+        total = float(
+            input("\n  Total MXN (from approved quote): $").strip().replace(",", "")
+        )
     except ValueError:
         print("\n  ❌ Invalid amount.")
         pause()
@@ -320,12 +344,13 @@ def screen_create_po(jira: JiraConnector, netsuite: NetsuiteConnector):
         ticket_id,
         f"Purchase order created: {po['po_number']}\n"
         f"Total: ${total:,.2f} MXN\n"
-        f"Status: Sent to Finance Approve"
+        f"Status: Sent to Finance Approve",
     )
 
     print(f"\n✅ PO {po['po_number']} created and submitted.")
     print(f"   Jira status updated to: Waiting for Delivery")
     pause()
+
 
 def screen_validate_price(jira: JiraConnector, validator: PriceValidator):
     """Validates current vendor price against approved quote."""
@@ -376,9 +401,11 @@ def screen_validate_price(jira: JiraConnector, validator: PriceValidator):
 
     pause()
 
+
 # ------------------------------------------------------------
 # Main menu
 # ------------------------------------------------------------
+
 
 def main():
     jira = JiraConnector()
@@ -422,6 +449,7 @@ def main():
         else:
             print("\n  ❌ Invalid option. Try again.")
             pause()
+
 
 if __name__ == "__main__":
     main()
