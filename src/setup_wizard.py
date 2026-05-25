@@ -295,6 +295,50 @@ def setup_vendor() -> None:
 
     warning("Vendor saved. Run 'playwright install chromium' then set VENDOR_MOCK=false.")
 
+def setup_azure_ad() -> bool:
+    """Collects and tests Azure AD credentials."""
+    section("Azure AD (Microsoft Entra ID)")
+    print()
+    print("  Required permissions: User.Read.All")
+    print("  Generate credentials at: portal.azure.com")
+    print("  App registrations → New registration → Certificates & secrets\n")
+
+    tenant_id = ask("Tenant ID")
+    client_id = ask("Client ID")
+    client_secret = ask_password("Client Secret")
+
+    # Test connection
+    print("\n  Testing Azure AD connection...")
+    try:
+        import requests
+        response = requests.post(
+            f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token",
+            data={
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "scope": "https://graph.microsoft.com/.default",
+            },
+        )
+        response.raise_for_status()
+        token = response.json().get("access_token")
+        if not token:
+            raise ValueError("No token received.")
+        success("Azure AD connected successfully.")
+        connected = True
+    except Exception as e:
+        error(f"Could not connect to Azure AD: {e}")
+        warning("Credentials saved but connection failed. Verify and re-run wizard.")
+        connected = False
+
+    write_env({
+        "AZURE_TENANT_ID": tenant_id,
+        "AZURE_CLIENT_ID": client_id,
+        "AZURE_CLIENT_SECRET": client_secret,
+        "AZURE_AD_MOCK": "false" if connected else "true",
+    })
+
+    return connected
 
 # ------------------------------------------------------------
 # Summary
@@ -397,7 +441,21 @@ def main():
         "SLACK_WEBHOOK_URL": "",
         "TEAMS_WEBHOOK_URL": "",
         "FINANCE_TEAM_EMAIL": "",
+        "AZURE_AD_MOCK": "true",
     })
+    
+    # Azure AD
+    pause()
+    clear()
+    header()
+    print("\n  Do you have your Azure AD credentials available?")
+    has_azure = ask("Configure Azure AD now? (y/n)", "n")
+    if has_azure.lower() == "y":
+        azure_ok = setup_azure_ad()
+        results["Azure AD"] = azure_ok
+    else:
+        write_env({"AZURE_AD_MOCK": "true"})
+        results["Azure AD"] = "pending"
 
     # Summary
     pause()

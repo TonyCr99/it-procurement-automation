@@ -1,7 +1,7 @@
 company:
-  name: Dunder Mifflin
-  country: US
-  timezone: America
+  name: n
+  country: n
+  timezone: n
 hardware:
   types:
   - windows
@@ -23,21 +23,20 @@ hardware:
   specs:
     macbook:
       standard:
-        chip_min: "M4"
+        chip_min: M4
         ram_min_gb: 16
         storage_min_gb: 512
         screen_inch: 13
       standard_plus:
-        chip_min: "M4"
+        chip_min: M4
         ram_min_gb: 16
         storage_min_gb: 512
         screen_inch: 14
       power:
-        chip_min: "M4"
+        chip_min: M4
         ram_min_gb: 16
         storage_min_gb: 512
         screen_inch: 16
-
     windows:
       standard:
         processor_gen_min: 13
@@ -55,7 +54,7 @@ hardware:
         storage_min_gb: 512
         screen_inch: 15.6
 ticket:
-  project_key: IT-Procurement
+  project_key: n
   statuses:
     new: New
     on_hold: On Hold
