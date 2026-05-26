@@ -119,6 +119,7 @@ class JiraConnector:
                 "jql": f"project={project_key} AND assignee = currentUser() AND status != Closed ORDER BY created DESC",
                 "fields": "summary,status,assignee,reporter,comment,created",
                 "maxResults": 50,
+            }
         )
         response.raise_for_status()
         issues = response.json()["issues"]
@@ -129,36 +130,47 @@ class JiraConnector:
     # ----------------------------------------------------------
 
     def update_status(self, ticket_id: str, new_status: str) -> None:
-        """Updates the status of a ticket."""
-        if self.mock:
-            if ticket_id not in MOCK_TICKETS:
-                raise ValueError(f"Ticket '{ticket_id}' not found.")
-            old_status = MOCK_TICKETS[ticket_id]["status"]
-            MOCK_TICKETS[ticket_id]["status"] = new_status
-            print(f"✅ [{ticket_id}] Status: '{old_status}' → '{new_status}'")
-            return
+    """Updates the status of a ticket."""
+    if self.mock:
+        if ticket_id not in MOCK_TICKETS:
+            raise ValueError(f"Ticket '{ticket_id}' not found.")
+        old_status = MOCK_TICKETS[ticket_id]["status"]
+        MOCK_TICKETS[ticket_id]["status"] = new_status
+        print(f"✅ [{ticket_id}] Status: '{old_status}' → '{new_status}'")
+        return
 
-        import requests
+    import requests
 
-        transitions = requests.get(
-            f"{self.base_url}/issue/{ticket_id}/transitions",
-            headers=self.headers,
-            auth=self.auth,
-        ).json()["transitions"]
+    response = requests.get(
+        f"{self.base_url}/issue/{ticket_id}/transitions",
+        headers=self.headers,
+        auth=self.auth,
+    )
+    response.raise_for_status()
+    data = response.json()
 
-        target = next((t for t in transitions if t["name"] == new_status), None)
-        if not target:
-            raise ValueError(
-                f"Transition '{new_status}' not available for {ticket_id}."
-            )
+    transitions = data.get("transitions", [])
+    if not transitions:
+        raise ValueError(f"No transitions available for {ticket_id}.")
 
-        requests.post(
-            f"{self.base_url}/issue/{ticket_id}/transitions",
-            headers=self.headers,
-            auth=self.auth,
-            json={"transition": {"id": target["id"]}},
+    target = next(
+        (t for t in transitions if t["name"].lower() == new_status.lower()),
+        None
+    )
+    if not target:
+        available = [t["name"] for t in transitions]
+        raise ValueError(
+            f"Transition '{new_status}' not available for {ticket_id}.\n"
+            f"Available: {available}"
         )
-        print(f"✅ [{ticket_id}] Status updated to '{new_status}'")
+
+    requests.post(
+        f"{self.base_url}/issue/{ticket_id}/transitions",
+        headers=self.headers,
+        auth=self.auth,
+        json={"transition": {"id": target["id"]}},
+    )
+    print(f"✅ [{ticket_id}] Status updated to '{new_status}'")
 
     def add_comment(self, ticket_id: str, comment: str) -> None:
         """Adds a comment to a ticket."""

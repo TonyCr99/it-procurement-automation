@@ -54,7 +54,7 @@ hardware:
         storage_min_gb: 512
         screen_inch: 15.6
 ticket:
-  project_key: n
+  project_key: PURCHASE
   statuses:
     new: New
     on_hold: On Hold
