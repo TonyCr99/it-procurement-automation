@@ -220,7 +220,7 @@ if __name__ == "__main__":
         print(f"  {ticket['id']} | {ticket['status']:<25} | {ticket['summary']}")
 
     print("\n--- Get single ticket ---")
-    ticket = jira.get_ticket("IT-001")
+    ticket = jira.get_ticket("PURCHASE-14770")
     print(f"  ID      : {ticket['id']}")
     print(f"  Summary : {ticket['summary']}")
     print(f"  Status  : {ticket['status']}")
