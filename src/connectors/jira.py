@@ -104,7 +104,7 @@ class JiraConnector:
         }
 
     def get_active_tickets(self) -> list:
-        """Returns all open tickets in the project."""
+        """Returns all open tickets assigned to current user."""
         if self.mock:
             return [t for t in MOCK_TICKETS.values() if t["status"] != "Closed"]
 
@@ -141,35 +141,36 @@ class JiraConnector:
 
         import requests
 
-    response = requests.get(
-        f"{self.base_url}/issue/{ticket_id}/transitions",
-        headers=self.headers,
-        auth=self.auth,
-    )
-    response.raise_for_status()
-    data = response.json()
-
-    transitions = data.get("transitions", [])
-    if not transitions:
-        raise ValueError(f"No transitions available for {ticket_id}.")
-
-    target = next(
-        (t for t in transitions if t["name"].lower() == new_status.lower()), None
-    )
-    if not target:
-        available = [t["name"] for t in transitions]
-        raise ValueError(
-            f"Transition '{new_status}' not available for {ticket_id}.\n"
-            f"Available: {available}"
+        response = requests.get(
+            f"{self.base_url}/issue/{ticket_id}/transitions",
+            headers=self.headers,
+            auth=self.auth,
         )
+        response.raise_for_status()
+        data = response.json()
 
-    requests.post(
-        f"{self.base_url}/issue/{ticket_id}/transitions",
-        headers=self.headers,
-        auth=self.auth,
-        json={"transition": {"id": target["id"]}},
-    )
-    print(f"✅ [{ticket_id}] Status updated to '{new_status}'")
+        transitions = data.get("transitions", [])
+        if not transitions:
+            raise ValueError(f"No transitions available for {ticket_id}.")
+
+        target = next(
+            (t for t in transitions if t["name"].lower() == new_status.lower()),
+            None,
+        )
+        if not target:
+            available = [t["name"] for t in transitions]
+            raise ValueError(
+                f"Transition '{new_status}' not available for {ticket_id}.\n"
+                f"Available: {available}"
+            )
+
+        requests.post(
+            f"{self.base_url}/issue/{ticket_id}/transitions",
+            headers=self.headers,
+            auth=self.auth,
+            json={"transition": {"id": target["id"]}},
+        )
+        print(f"✅ [{ticket_id}] Status updated to '{new_status}'")
 
     def add_comment(self, ticket_id: str, comment: str) -> None:
         """Adds a comment to a ticket."""
