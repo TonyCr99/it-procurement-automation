@@ -42,3 +42,6 @@ Thumbs.db
 src/data/cost_centers.xlsx
 src/data/*.xlsx
 !src/data/cost_centers_mock.xlsx
+
+# Debug scripts — temporary, never commit
+debug_*.py
