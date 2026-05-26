@@ -119,7 +119,7 @@ class JiraConnector:
                 "jql": f"project={project_key} AND assignee = currentUser() AND status != Closed ORDER BY created DESC",
                 "fields": "summary,status,assignee,reporter,comment,created",
                 "maxResults": 50,
-            }
+            },
         )
         response.raise_for_status()
         issues = response.json()["issues"]
@@ -130,16 +130,16 @@ class JiraConnector:
     # ----------------------------------------------------------
 
     def update_status(self, ticket_id: str, new_status: str) -> None:
-    """Updates the status of a ticket."""
-    if self.mock:
-        if ticket_id not in MOCK_TICKETS:
-            raise ValueError(f"Ticket '{ticket_id}' not found.")
-        old_status = MOCK_TICKETS[ticket_id]["status"]
-        MOCK_TICKETS[ticket_id]["status"] = new_status
-        print(f"✅ [{ticket_id}] Status: '{old_status}' → '{new_status}'")
-        return
+        """Updates the status of a ticket."""
+        if self.mock:
+            if ticket_id not in MOCK_TICKETS:
+                raise ValueError(f"Ticket '{ticket_id}' not found.")
+            old_status = MOCK_TICKETS[ticket_id]["status"]
+            MOCK_TICKETS[ticket_id]["status"] = new_status
+            print(f"✅ [{ticket_id}] Status: '{old_status}' → '{new_status}'")
+            return
 
-    import requests
+        import requests
 
     response = requests.get(
         f"{self.base_url}/issue/{ticket_id}/transitions",
@@ -154,8 +154,7 @@ class JiraConnector:
         raise ValueError(f"No transitions available for {ticket_id}.")
 
     target = next(
-        (t for t in transitions if t["name"].lower() == new_status.lower()),
-        None
+        (t for t in transitions if t["name"].lower() == new_status.lower()), None
     )
     if not target:
         available = [t["name"] for t in transitions]
