@@ -116,9 +116,9 @@ class JiraConnector:
             headers=self.headers,
             auth=self.auth,
             params={
-                "jql": f"project={project_key} AND status != Closed ORDER BY created DESC",
+                "jql": f"project={project_key} AND assignee = currentUser() AND status != Closed ORDER BY created DESC",
                 "fields": "summary,status,assignee,reporter,comment,created",
-            },
+                "maxResults": 50,
         )
         response.raise_for_status()
         issues = response.json()["issues"]
