@@ -27,9 +27,15 @@ console = Console()
 
 def with_spinner(message: str, func, *args, **kwargs):
     """
-    Runs a function while displaying a loading spinner.
-    Usage: result = with_spinner("Loading tickets...", jira.get_active_tickets)
+    Runs a function while displaying a loading message.
+    Falls back to simple print on Windows cmd.
     """
+    import sys
+    if sys.platform == "win32":
+        print(f"\n  ⏳ {message}", end="\r")
+        result = func(*args, **kwargs)
+        print(f"  ✅ Done.          ")
+        return result
     with Live(Spinner("dots", text=message), console=console, transient=True):
         return func(*args, **kwargs)
 

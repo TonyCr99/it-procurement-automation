@@ -220,14 +220,9 @@ if __name__ == "__main__":
         print(f"  {ticket['id']} | {ticket['status']:<25} | {ticket['summary']}")
 
     print("\n--- Get single ticket ---")
-    ticket = jira.get_ticket("PURCHASE-14770")
+    ticket = jira.get_ticket("PURCHASE-1477")
     print(f"  ID      : {ticket['id']}")
     print(f"  Summary : {ticket['summary']}")
     print(f"  Status  : {ticket['status']}")
     print(f"  Approver: {ticket['approver']}")
-
-    print("\n--- Update status ---")
-    jira.update_status("IT-001", "Waiting for Approval")
-
-    print("\n--- Add comment ---")
-    jira.add_comment("IT-001", "Quote attached. Total: $25,000 MXN")
+    print(f"  Comments: {len(ticket['comments'])} comments")
